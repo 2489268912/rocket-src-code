@@ -17,7 +17,7 @@ class ISS extends Module {
       val intpc_input   =    Input(UInt(40.W))
       val fpcsr_input   =    Input(UInt(8.W))
        
-      val sent_output  =    Output(UInt(65.W))
+      val sent_output  =    Output(UInt(256.W))
 
 })
    val intreg           =    Reg(Vec(32,UInt(64.W)))
@@ -30,7 +30,7 @@ class ISS extends Module {
 //copy request
 when(io.copy_valid){
    for(i <-0 until 32){
-      intreg(31-i) := io.intreg_input(i)
+      intreg(i) := io.intreg_input(i)
       fpreg(i) := io.fpreg_input(i)
    }  
    intpcreg := io.intpc_input
@@ -39,7 +39,7 @@ when(io.copy_valid){
 } 
 .otherwise{
       for(i <-0 until 32){
-      intreg(31-i) := intreg(31-i)
+      intreg(i) := intreg(i)
       fpreg(i) := fpreg(i)   
    }
    intpcreg := intpcreg
@@ -55,7 +55,7 @@ when(copydone_reg === 1.U){
 }
 
 for(i <-0 until 32){
-   dontTouch(intreg(31-i))
+   dontTouch(intreg(i))
    dontTouch(fpreg(i))
    }  
    dontTouch(intpcreg)
@@ -68,7 +68,10 @@ val testcoun =RegInit(0.U(8.W))
 testcoun := Mux(io.sent_valid,testcoun+1.U,0.U)
 dontTouch(testcoun)
 
-val seq_signal = RegInit(0.U(2.W))
+val seq_signal = RegInit(0.U(3.W))
+val intcat = RegInit(0.U(189.W))
+val fpcat = RegInit(0.U(188.W))
+val csrpc = RegInit(0.U(205.W))
 
 val int_coun = RegInit(0.U(5.W))
 val q_int_coun = Wire(UInt())
@@ -90,14 +93,14 @@ when(io.sent_valid){
    seq_signal := Mux(int_codo || fp_codo || codo ,seq_signal+1.U , seq_signal)
    when(seq_signal === 0.U){
       int_coun := Mux(int_codo , 0.U,int_coun+1.U)
-      io.sent_output := intreg(q_int_coun) 
+      io.sent_output := Cat(seq_signal,intcat,intreg(q_int_coun)) 
    }
    .elsewhen(seq_signal === 1.U){
       fp_coun := Mux(fp_codo , 0.U,fp_coun+1.U)
-      io.sent_output := fpreg(q_fp_coun) 
+      io.sent_output :=Cat(seq_signal,fpcat,fpreg(q_fp_coun))
    }
    .elsewhen(seq_signal === 2.U){
-      io.sent_output := Cat (intpcreg,fpcsrreg)
+      io.sent_output := Cat(seq_signal,csrpc,intpcreg,fpcsrreg)
    }
    .otherwise{
       seq_signal := 0.U
