@@ -205,6 +205,8 @@ class FPUCoreIO(implicit p: Parameters) extends CoreBundle()(p) {
   val sboard_clra = Output(UInt(5.W))
 
   val keep_clock_enabled = Input(Bool())
+
+//snap shot fpu output
   val frf = Output(Vec(32, UInt(64.W)))
   val fpu_inflight = Output(Bool())
 }
@@ -793,6 +795,10 @@ class FPU(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
 
   // regfile
   val regfile = Mem(32, Bits((fLen+1).W))
+  //read
+  for (i <-0 until 32) { 
+    io.frf(i) := ieee(regfile(i))
+  }
   when (load_wb) {
     val wdata = recode(load_wb_data, load_wb_typeTag)
     regfile(load_wb_tag) := wdata
@@ -806,10 +812,6 @@ class FPU(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
     frfWriteBundle(0).wrdata := ieee(wdata)
   }
 
-//read
-  for (i <-0 until 32) { 
-    io.frf(i) := ieee(regfile(i))
-  }
 
   val ex_rs = ex_ra.map(a => regfile(a))
   when (io.valid) {

@@ -809,9 +809,9 @@ when(ctrl_killd && q_copyvalid && !ex_reg_valid && mem_reg_valid){
 }
 //copy and sent module IO hook up  
 for( i <-0 until 31){
-    isa.io.intreg_input(i.U) := rf.read(i.U)
+    isa.io.intreg_input(i.U) := rf.read((31-i).U)
 }
-isa.io.intreg_input(31) := 0.U
+isa.io.intreg_input(31.U) := 0.U
 for( i <-0 until 32){
     isa.io.fpreg_input(i) := io.fpu.frf(i)
 }

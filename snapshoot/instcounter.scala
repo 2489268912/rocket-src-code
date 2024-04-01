@@ -11,7 +11,6 @@ class Instcounter extends Module{
       val copy_done   =    Input(Bool())
 })
    val instnumber     =    RegInit(0.U(64.W))
-   val fpcsrreg       =    RegInit(0.U(65.W))
    
 //copy request
 when(io.wb_valid){
